@@ -1,0 +1,28 @@
+{
+	"web": {
+		"port": ":8102",
+		"isDebug": true
+	},
+	"db": {
+	    "default": {
+            "type": "mysql",
+            "dsn": "dbuser:dbpassword@tcp(dbhost:3306)/dbname?charset=utf8",
+            "maxOpenConnections": 1,
+            "maxIdleConnections": 1
+        }
+	},
+	"cache": {
+        "host": "127.0.0.1:11211",
+        "prefix": "app_",
+        "expiration": 3600
+	},
+	"redis": {
+	    "default": {
+            "address": "127.0.0.1:6379",
+            "maxIdle": 1,
+            "maxActive": 5,
+            "idleTimeout": 600,
+            "wait": false
+        }
+	}
+}
