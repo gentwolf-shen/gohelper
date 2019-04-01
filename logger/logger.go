@@ -7,17 +7,19 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
 
 var (
-	flag        = log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile
+	flag        = log.Ldate | log.Ltime | log.Lmicroseconds
 	globalLevel = LEVEL_TRACE
-	logFiles    map[int]*os.File
-	logWrites   map[int]*log.Logger
-	levels      map[int]string
 	config      *Config
+	logFiles    map[int]*os.File
+	logWriters  map[int]*log.Logger
+	levels      map[int]string
+	colors      map[int]string
 )
 
 // TRACE < DEBUG < INFO < WARN < ERROR
@@ -27,14 +29,6 @@ const (
 	LEVEL_INFO
 	LEVEL_WARN
 	LEVEL_ERROR
-)
-
-const (
-	colorTrace = "1;32"
-	colorDebug = "1;32"
-	colorInfo  = "1;36"
-	colorWarn  = "1;33"
-	colorError = "1;31"
 )
 
 // 从配置文件中初始化
@@ -79,10 +73,17 @@ func initLogger(bytes []byte) {
 	levels[LEVEL_WARN] = "WARN"
 	levels[LEVEL_ERROR] = "ERROR"
 
-	logFiles = make(map[int]*os.File)
-	logWrites = make(map[int]*log.Logger)
+	colors = make(map[int]string)
+	colors[LEVEL_TRACE] = "1;32"
+	colors[LEVEL_DEBUG] = "1;32"
+	colors[LEVEL_INFO] = "1;36"
+	colors[LEVEL_WARN] = "1;33"
+	colors[LEVEL_ERROR] = "1;31"
 
-	initLoggerWrite()
+	logFiles = make(map[int]*os.File)
+	logWriters = make(map[int]*log.Logger)
+
+	initLoggerWriter()
 
 	checkDay()
 }
@@ -91,12 +92,12 @@ func initLogger(bytes []byte) {
 func checkDay() {
 	go func() {
 		for range time.Tick(1 * time.Minute) {
-			initLoggerWrite()
+			initLoggerWriter()
 		}
 	}()
 }
 
-func initLoggerWrite() {
+func initLoggerWriter() {
 	// 关闭所有已打开的文件
 	for _, file := range logFiles {
 		file.Close()
@@ -117,9 +118,9 @@ func initLoggerWrite() {
 				panic("create log file error: " + filename)
 			}
 
-			logWrites[i] = log.New(io.MultiWriter(logFiles[i], os.Stdout), "", flag)
+			logWriters[i] = log.New(io.MultiWriter(logFiles[i], os.Stdout), "", flag)
 		} else {
-			logWrites[i] = log.New(os.Stdout, "", flag)
+			logWriters[i] = log.New(os.Stdout, "", flag)
 		}
 	}
 }
@@ -148,33 +149,40 @@ func GetLevel() int {
 	return globalLevel
 }
 
-func Trace(msg string) {
-	if LEVEL_TRACE >= globalLevel {
-		logWrites[LEVEL_TRACE].Println(fmt.Sprintf("\033[%sm[%s] %s\033[0m", colorTrace, "TRACE", msg))
-	}
+func Trace(msg interface{}) {
+	logWriter(LEVEL_TRACE, msg)
 }
 
-func Debug(msg string) {
-	if LEVEL_DEBUG >= globalLevel {
-		logWrites[LEVEL_DEBUG].Println(fmt.Sprintf("\033[%sm[%s] %s\033[0m", colorDebug, "DEBUG", msg))
-	}
+func Debug(msg interface{}) {
+	logWriter(LEVEL_DEBUG, msg)
 }
 
-func Info(msg string) {
-	if LEVEL_INFO >= globalLevel {
-		logWrites[LEVEL_INFO].Println(fmt.Sprintf("\033[%sm[%s] %s\033[0m", colorInfo, "INFO", msg))
-	}
+func Info(msg interface{}) {
+	logWriter(LEVEL_INFO, msg)
 }
 
-func Warn(msg string) {
-	if LEVEL_WARN >= globalLevel {
-		logWrites[LEVEL_WARN].Println(fmt.Sprintf("\033[%sm[%s] %s\033[0m", colorWarn, "WARN", msg))
-	}
+func Warn(msg interface{}) {
+	logWriter(LEVEL_WARN, msg)
 }
 
-func Error(msg string) {
-	if LEVEL_ERROR >= globalLevel {
-		logWrites[LEVEL_ERROR].Println(fmt.Sprintf("\033[%sm[%s] %s\033[0m", colorError, "ERROR", msg))
+func Error(msg interface{}) {
+	logWriter(LEVEL_ERROR, msg)
+}
+
+func Log(level int, msg interface{}) {
+	logWriter(level, msg)
+}
+
+func logWriter(level int, msg interface{}) {
+	if level > globalLevel {
+		if _, file, line, ok := runtime.Caller(2); ok {
+			segments := strings.Split(file, "/")
+			filename := segments[len(segments)-1]
+
+			if level >= globalLevel {
+				logWriters[level].Println(fmt.Sprintf("\033[%sm%s:%d [%s] %v\033[0m", colors[level], filename, line, levels[level], msg))
+			}
+		}
 	}
 }
 

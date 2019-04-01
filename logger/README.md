@@ -31,6 +31,8 @@
         logger.Warn("msg from warn")
         logger.Error("msg from error")
         
+        logger.Log(logger.LEVEL_ERROR, "ERROR MSG")
+        
         // 在初始化后, 还可以动态的设置输出
         logger.SetLevel(logger.LEVEL_WARN)
     ```
