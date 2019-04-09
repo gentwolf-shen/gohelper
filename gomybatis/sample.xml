@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mapper version="1.0">
+    <select id="query">
+        SELECT id,username,email FROM app_user
+        <where>
+            <if test="status != 0">status = #{status}</if>
+        </where>
+        <suffix>
+            ORDER BY id DESC
+            LIMIT #{limit}
+        </suffix>
+    </select>
+
+    <select id="queryById">
+        SELECT id,username,email FROM app_user WHERE id=#{id}
+    </select>
+
+    <select id="queryUsername">
+        SELECT username FROM app_user WHERE id=#{id}
+    </select>
+
+    <update id="update">
+        UPDATE app_user
+        <set>
+            <if test="username != ''">username = #{username}</if>
+            <if test="email  != ''">email = #{email}</if>
+            <if test="address != ''">address = #{address}</if>
+        </set>
+        <!--<where>-->
+            <!--<if test="id != 0">id = #{id}</if>-->
+        <!--</where>-->
+        <suffix>
+           WHERE id = #{id}
+        </suffix>
+    </update>
+
+    <delete id="delete">
+        DELETE FROM app_user WHERE id=#{id}
+    </delete>
+
+    <insert id="insert">
+        INSERT INTO app_user(username,email) VALUES(#{username},#{email})
+    </insert>
+</mapper>
