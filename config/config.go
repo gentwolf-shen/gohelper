@@ -34,7 +34,7 @@ func LoadFromStr(str string) (Config, error) {
 }
 
 func LoadDefault() (Config, error) {
-	return Load(filepath.Dir(os.Args[0]) + "/config/application.txt")
+	return Load(filepath.Dir(os.Args[0]) + "/config/application.json")
 }
 
 type WebConfig struct {
