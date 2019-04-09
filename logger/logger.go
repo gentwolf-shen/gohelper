@@ -153,24 +153,47 @@ func Trace(msg interface{}) {
 	logWriter(LEVEL_TRACE, msg)
 }
 
+func Tracef(format string, msg ...interface{}) {
+	logWriter(LEVEL_TRACE, fmt.Sprintf(format, msg...))
+}
+
 func Debug(msg interface{}) {
 	logWriter(LEVEL_DEBUG, msg)
+}
+
+func Debugf(format string, msg ...interface{}) {
+	logWriter(LEVEL_DEBUG, fmt.Sprintf(format, msg...))
 }
 
 func Info(msg interface{}) {
 	logWriter(LEVEL_INFO, msg)
 }
 
+func Infof(format string, msg ...interface{}) {
+	logWriter(LEVEL_INFO, fmt.Sprintf(format, msg...))
+}
+
 func Warn(msg interface{}) {
 	logWriter(LEVEL_WARN, msg)
+}
+
+func Warnf(format string, msg ...interface{}) {
+	logWriter(LEVEL_WARN, fmt.Sprintf(format, msg...))
 }
 
 func Error(msg interface{}) {
 	logWriter(LEVEL_ERROR, msg)
 }
 
+func Errorf(format string, msg ...interface{}) {
+	logWriter(LEVEL_ERROR, fmt.Sprintf(format, msg...))
+}
+
 func Log(level int, msg interface{}) {
 	logWriter(level, msg)
+}
+func Logf(level int, format string, msg ...interface{}) {
+	logWriter(level, fmt.Sprintf(format, msg...))
 }
 
 func logWriter(level int, msg interface{}) {
