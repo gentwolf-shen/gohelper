@@ -2,7 +2,7 @@ package gomybatis
 
 import (
 	"encoding/xml"
-	"gohelper/logger"
+	"github.com/gentwolf-shen/gohelper/logger"
 	"io/ioutil"
 	"regexp"
 	"strings"
