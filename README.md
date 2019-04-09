@@ -16,3 +16,4 @@
 8. hashhelper (hash算法: md5, sha1, sha256)
 9. timehelper (日期/时间常用转换)
 10. util (几个常用的方法)
+11. encoding (自定义的加密方法)
