@@ -3,7 +3,7 @@ package gomybatis
 import (
 	"database/sql"
 	"errors"
-	"gohelper/logger"
+	"github.com/gentwolf-shen/gohelper/logger"
 	"io/ioutil"
 	"regexp"
 	"strings"

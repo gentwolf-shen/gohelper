@@ -1,7 +1,7 @@
 package gomybatis
 
 import (
-	"gohelper/convert"
+	"github.com/gentwolf-shen/gohelper/convert"
 	"reflect"
 )
 
