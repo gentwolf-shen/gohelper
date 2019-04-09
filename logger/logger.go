@@ -20,6 +20,7 @@ var (
 	logWriters  map[int]*log.Logger
 	levels      map[int]string
 	colors      map[int]string
+	isInited    = false
 )
 
 // TRACE < DEBUG < INFO < WARN < ERROR
@@ -33,6 +34,10 @@ const (
 
 // 从配置文件中初始化
 func InitFromJson(filename string) {
+	if isInited {
+		return
+	}
+
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		panic("init logger config file error " + err.Error())
@@ -43,6 +48,10 @@ func InitFromJson(filename string) {
 
 // 使用默认初始化
 func InitDefault() {
+	if isInited {
+		return
+	}
+
 	str := `{
 			  "level": "DEBUG",
 			  "file": {
@@ -55,6 +64,7 @@ func InitDefault() {
 }
 
 func initLogger(bytes []byte) {
+	isInited = true
 	config = &Config{}
 	if err := json.Unmarshal(bytes, config); err != nil {
 		panic("parse logger config error " + err.Error())
