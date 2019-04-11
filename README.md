@@ -19,3 +19,4 @@
 11. encoding (自定义的加密方法)
 12. ginhelper (gin-gonic扩展的几个方法)
 13. iconv (编码转换)
+14. aes (AES加密/解密)
