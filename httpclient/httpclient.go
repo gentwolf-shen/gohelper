@@ -120,7 +120,7 @@ func jsonHeader(headers map[string]string) map[string]string {
 	return headers
 }
 
-func PostFile(url string, param url.Values, files map[string]string) ([]byte, error) {
+func PostFile(url string, param url.Values, files map[string]string, headers map[string]string) ([]byte, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -131,17 +131,15 @@ func PostFile(url string, param url.Values, files map[string]string) ([]byte, er
 	}
 
 	for k, v := range files {
-		file, err := os.Open(v)
-		if err != nil {
+		if file, err := os.Open(v); err == nil {
+			if part, err := writer.CreateFormFile(k, v); err == nil {
+				_, err = io.Copy(part, file)
+			}
+
+			file.Close()
+		} else {
 			return nil, err
 		}
-
-		part, err := writer.CreateFormFile(k, v)
-		if err == nil {
-			_, err = io.Copy(part, file)
-		}
-
-		file.Close()
 	}
 
 	if err := writer.Close(); err != nil {
@@ -150,6 +148,10 @@ func PostFile(url string, param url.Values, files map[string]string) ([]byte, er
 
 	request, err := http.NewRequest("POST", url, body)
 	request.Header.Set("Content-Type", writer.FormDataContentType())
+
+	for k, v := range headers {
+		request.Header.Add(k, v)
+	}
 
 	client := &http.Client{}
 	response, err := client.Do(request)
