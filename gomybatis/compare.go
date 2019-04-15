@@ -1,8 +1,9 @@
 package gomybatis
 
 import (
-	"github.com/gentwolf-shen/gohelper/convert"
 	"reflect"
+
+	"github.com/gentwolf-shen/gohelper/convert"
 )
 
 func compare(value interface{}, op, testValue string) bool {
@@ -24,7 +25,7 @@ func compare(value interface{}, op, testValue string) bool {
 	case "uint8":
 		bl = compareUint8(value.(uint8), convert.ToUint8(testValue), op)
 	case "uint16":
-		bl = compareUint(value.(uint), convert.ToUint(testValue), op)
+		bl = compareUint16(value.(uint16), convert.ToUint16(testValue), op)
 	case "uint32":
 		bl = compareUint32(value.(uint32), convert.ToUint32(testValue), op)
 	case "uint64":

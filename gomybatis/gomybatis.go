@@ -3,56 +3,61 @@ package gomybatis
 import (
 	"database/sql"
 	"errors"
-	"github.com/gentwolf-shen/gohelper/logger"
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/gentwolf-shen/gohelper/logger"
 )
 
 var (
-	dbConn       *sql.DB
+	dbConns      map[string]*sql.DB
 	mappers      map[string]map[string]SqlItem
 	ptnParam     = regexp.MustCompile(`#\{(.*?)\}`)
 	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
 	ptnCamelCase = regexp.MustCompile(`_([a-z])`)
 )
 
-func SetDb(db *sql.DB) {
-	dbConn = db
-}
-
-func Init(xmlMapperPath string) {
+func SetMapperPath(dbConn *sql.DB, mapperPath string) {
 	logger.InitDefault()
 
 	mappers = make(map[string]map[string]SqlItem)
-
-	if !strings.HasSuffix(xmlMapperPath, "/") {
-		xmlMapperPath += "/"
+	if dbConns == nil {
+		dbConns = make(map[string]*sql.DB)
 	}
 
-	files, err := ioutil.ReadDir(xmlMapperPath)
+	if !strings.HasSuffix(mapperPath, "/") {
+		mapperPath += "/"
+	}
+
+	files, err := ioutil.ReadDir(mapperPath)
 	if err != nil {
-		logger.Error("read mapper path error: " + xmlMapperPath)
+		logger.Error("read mapper path error: " + mapperPath)
 		panic(err)
 	}
 
 	for _, file := range files {
 		filename := strings.ToLower(file.Name())
 		if strings.HasSuffix(filename, ".xml") {
-			mappers[strings.Split(filename, ".xml")[0]] = parseXML(xmlMapperPath + filename)
+			basename := strings.Split(filename, ".xml")[0]
+			mappers[basename] = parseXML(mapperPath + filename)
+			dbConns[basename] = dbConn
 		}
 	}
 }
 
 func Query(selector string, args map[string]interface{}) ([]map[string]string, error) {
 	filename, id := parseSelector(selector)
-	sqlItem := mappers[filename][id]
+	sqlItem, ok := mappers[filename][id]
+	if !ok {
+		return nil, selectorNotExists(selector)
+	}
 
 	rawSql := buildSelect(&sqlItem, args)
 	tsql, values := parseSql(rawSql, args)
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	rows, err := dbConn.Query(tsql, values...)
+	rows, err := dbConns[filename].Query(tsql, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +97,7 @@ func Update(selector string, args map[string]interface{}) (int64, error) {
 	filename, id := parseSelector(selector)
 	sqlItem, ok := mappers[filename][id]
 	if !ok {
-		return -1, errors.New(selector + " not exists")
+		return -1, selectorNotExists(selector)
 	}
 
 	rawSql := buildUpdate(&sqlItem, args)
@@ -100,7 +105,7 @@ func Update(selector string, args map[string]interface{}) (int64, error) {
 
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	result, err := dbConn.Exec(tsql, values...)
+	result, err := dbConns[filename].Exec(tsql, values...)
 	if err != nil {
 		return -1, err
 	}
@@ -112,7 +117,7 @@ func Delete(selector string, args map[string]interface{}) (int64, error) {
 	filename, id := parseSelector(selector)
 	sqlItem, ok := mappers[filename][id]
 	if !ok {
-		return -1, errors.New(selector + " not exists")
+		return -1, selectorNotExists(selector)
 	}
 
 	rawSql := buildDelete(&sqlItem, args)
@@ -120,7 +125,7 @@ func Delete(selector string, args map[string]interface{}) (int64, error) {
 
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	result, err := dbConn.Exec(tsql, values...)
+	result, err := dbConns[filename].Exec(tsql, values...)
 	if err != nil {
 		return -1, err
 	}
@@ -132,7 +137,7 @@ func Insert(selector string, args map[string]interface{}) (int64, error) {
 	filename, id := parseSelector(selector)
 	sqlItem, ok := mappers[filename][id]
 	if !ok {
-		return -1, errors.New(selector + " not exists")
+		return -1, selectorNotExists(selector)
 	}
 
 	rawSql := buildInsert(&sqlItem, args)
@@ -140,7 +145,7 @@ func Insert(selector string, args map[string]interface{}) (int64, error) {
 
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	result, err := dbConn.Exec(tsql, values...)
+	result, err := dbConns[filename].Exec(tsql, values...)
 	if err != nil {
 		return -1, err
 	}
@@ -192,7 +197,7 @@ func fetchRows(rows *sql.Rows) []map[string]string {
 func parseSelector(selector string) (string, string) {
 	tmp := strings.Split(selector, ".")
 	if len(tmp) != 2 {
-		panic(errors.New("gomybatis selector error: " + selector))
+		return "", ""
 	}
 
 	return tmp[0], tmp[1]
@@ -213,4 +218,8 @@ func toCamelCase(str string) string {
 	return ptnCamelCase.ReplaceAllStringFunc(str, func(a string) string {
 		return strings.Title(a[1:2])
 	})
+}
+
+func selectorNotExists(selector string) error {
+	return errors.New("selector \"" + selector + "\" not exists!")
 }

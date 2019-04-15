@@ -3,10 +3,11 @@ package gomybatis
 import (
 	"encoding/xml"
 	"fmt"
-	"github.com/gentwolf-shen/gohelper/logger"
 	"io/ioutil"
 	"regexp"
 	"strings"
+
+	"github.com/gentwolf-shen/gohelper/logger"
 )
 
 var (
