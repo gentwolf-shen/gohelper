@@ -50,9 +50,9 @@ type DbConfig struct {
 }
 
 type CacheConfig struct {
-	Expiration int32  `json:"expiration"`
-	Prefix     string `json:"prefix"`
-	Host       string `json:"host"`
+	Expiration int32    `json:"expiration"`
+	Prefix     string   `json:"prefix"`
+	Hosts      []string `json:"hosts"`
 }
 
 type RedisConfig struct {

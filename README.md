@@ -21,3 +21,4 @@
 13. iconv (编码转换)
 14. aes (AES加密/解密)
 15. daemon (以daemon方式运行)
+16. memcache (memcache缓存)
