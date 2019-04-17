@@ -1,7 +1,7 @@
 {
   "level": "DEBUG",
   "file": {
-    "logPath": "/home/jerry/workspace/go/gohelper/log/",
+    "logPath": "${application.path}/log/",
     "level": "WARN"
   }
 }

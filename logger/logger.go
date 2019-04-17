@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -55,7 +56,7 @@ func InitDefault() {
 	str := `{
 			  "level": "DEBUG",
 			  "file": {
-				"logPath": "./log/",
+				"logPath": "${application.path}/log/",
 				"level": "WARN"
 			  }
 			}`
@@ -69,7 +70,9 @@ func initLogger(bytes []byte) {
 	if err := json.Unmarshal(bytes, config); err != nil {
 		panic("parse logger config error " + err.Error())
 	}
-
+	fmt.Println(config.File.LogPath)
+	config.File.LogPath = filterVariable(config.File.LogPath)
+	fmt.Println(config.File.LogPath)
 	if _, err := os.Stat(config.File.LogPath); err != nil {
 		if err := os.MkdirAll(config.File.LogPath, os.ModePerm); err != nil {
 			panic("create file.logPath error, " + err.Error())
@@ -96,6 +99,10 @@ func initLogger(bytes []byte) {
 	initLoggerWriter()
 
 	checkDay()
+}
+
+func filterVariable(str string) string {
+	return strings.Replace(str, "${application.path}", filepath.Dir(os.Args[0]), -1)
 }
 
 // 每天生成一个文件
