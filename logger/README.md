@@ -10,7 +10,7 @@
       "level": "DEBUG", // 日志级别(TRACE < DEBUG < INFO < WARN < ERROR),在这个级别以下的,不输出
       "file": { // 定义需要输出到文件的日志
         "logPath": "/path/to/log/",    // 日志的保存目录, 或使用 ${application.path} (你的bin程序所在目录)
-        "level": "WARN" // 在这个级别及以上的日志,输出到文件
+        "level": "INFO" // 在这个级别及以上的日志,输出到文件
       }
     }
     ```

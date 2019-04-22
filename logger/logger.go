@@ -47,21 +47,29 @@ func InitFromJson(filename string) {
 	initLogger(b)
 }
 
-// 使用默认初始化
+// 从默认目录加载配置，如果没有配置文件，则使用默认配置
 func InitDefault() {
 	if isInited {
 		return
 	}
 
-	str := `{
+	initLogger(loadDefaultConfig())
+}
+
+func loadDefaultConfig() []byte {
+	b, err := ioutil.ReadFile(filepath.Dir(os.Args[0]) + "/config/logger.json")
+	if err != nil {
+		str := `{
 			  "level": "DEBUG",
 			  "file": {
 				"logPath": "${application.path}/log/",
-				"level": "WARN"
+				"level": "INFO"
 			  }
 			}`
+		b = []byte(str)
+	}
 
-	initLogger([]byte(str))
+	return b
 }
 
 func initLogger(bytes []byte) {
@@ -70,9 +78,7 @@ func initLogger(bytes []byte) {
 	if err := json.Unmarshal(bytes, config); err != nil {
 		panic("parse logger config error " + err.Error())
 	}
-	fmt.Println(config.File.LogPath)
 	config.File.LogPath = filterVariable(config.File.LogPath)
-	fmt.Println(config.File.LogPath)
 	if _, err := os.Stat(config.File.LogPath); err != nil {
 		if err := os.MkdirAll(config.File.LogPath, os.ModePerm); err != nil {
 			panic("create file.logPath error, " + err.Error())
