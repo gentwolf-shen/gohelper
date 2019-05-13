@@ -68,7 +68,6 @@ func buildSqlWhere(ifs []ItemIf, args map[string]interface{}) string {
 
 	index := 0
 	for i := 0; i < length; i++ {
-		fmt.Println(ifs[i].Test)
 		if parseTest(ifs[i].Test, args) {
 			tmp := strings.TrimSpace(ifs[i].If)
 			if ptnAndOr.MatchString(tmp) {
