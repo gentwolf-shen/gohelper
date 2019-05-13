@@ -14,6 +14,7 @@ var (
 	dbConns      map[string]*sql.DB
 	mappers      map[string]map[string]SqlItem
 	ptnParam     = regexp.MustCompile(`#\{(.*?)\}`)
+	ptnParamVar  = regexp.MustCompile(`\$\{(.*?)\}`)
 	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
 	ptnCamelCase = regexp.MustCompile(`_([a-z])`)
 )
@@ -210,6 +211,10 @@ func parseSql(tsql string, args map[string]interface{}) (string, []interface{}) 
 		tsql = strings.Replace(tsql, rs[i][0], "?", -1)
 		values[i] = args[rs[i][1]]
 	}
+
+	tsql = ptnParamVar.ReplaceAllStringFunc(tsql, func(a string) string {
+		return args[a[2:len(a)-1]].(string)
+	})
 
 	return tsql, values
 }
