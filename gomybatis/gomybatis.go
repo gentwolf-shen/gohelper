@@ -15,17 +15,31 @@ var (
 	mappers      map[string]map[string]SqlItem
 	ptnParam     = regexp.MustCompile(`#\{(.*?)\}`)
 	ptnParamVar  = regexp.MustCompile(`\$\{(.*?)\}`)
-	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
 	ptnCamelCase = regexp.MustCompile(`_([a-z])`)
+	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
 )
 
-func SetMapperPath(dbConn *sql.DB, mapperPath string) {
+func initMapper() {
 	logger.InitDefault()
 
-	mappers = make(map[string]map[string]SqlItem)
+	if mappers == nil {
+		mappers = make(map[string]map[string]SqlItem)
+	}
+
 	if dbConns == nil {
 		dbConns = make(map[string]*sql.DB)
 	}
+}
+
+func SetMapper(dbConn *sql.DB, name, xml string) {
+	initMapper()
+
+	mappers[name] = parseXmlFromStr(xml)
+	dbConns[name] = dbConn
+}
+
+func SetMapperPath(dbConn *sql.DB, mapperPath string) {
+	initMapper()
 
 	if !strings.HasSuffix(mapperPath, "/") {
 		mapperPath += "/"
@@ -41,7 +55,7 @@ func SetMapperPath(dbConn *sql.DB, mapperPath string) {
 		filename := strings.ToLower(file.Name())
 		if strings.HasSuffix(filename, ".xml") {
 			basename := strings.Split(filename, ".xml")[0]
-			mappers[basename] = parseXML(mapperPath + filename)
+			mappers[basename] = parseXmlFromFile(mapperPath + filename)
 			dbConns[basename] = dbConn
 		}
 	}

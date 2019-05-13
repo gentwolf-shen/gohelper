@@ -15,17 +15,36 @@ var (
 	ptnTest  = regexp.MustCompile(`[\s]*(AND|and|OR|or)[\s]+`)
 )
 
-func parseXML(filename string) map[string]SqlItem {
+func parseXmlFromStr(str string) map[string]SqlItem {
+	rs, err := parseXml([]byte(str))
+	if err != nil {
+		logger.Error("parse xml error:" + str)
+		panic(err)
+	}
+
+	return rs
+}
+
+func parseXmlFromFile(filename string) map[string]SqlItem {
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		logger.Error("read file error: " + filename)
 		panic(err)
 	}
 
+	rs, err := parseXml(b)
+	if err != nil {
+		logger.Error("parse xml file error:" + filename)
+		panic(err)
+	}
+
+	return rs
+}
+
+func parseXml(b []byte) (map[string]SqlItem, error) {
 	mapper := &Mapper{}
 	if err := xml.Unmarshal(b, mapper); err != nil {
-		logger.Error("parse xml file error: " + filename)
-		panic(err)
+		return nil, err
 	}
 
 	result := make(map[string]SqlItem)
@@ -42,7 +61,7 @@ func parseXML(filename string) map[string]SqlItem {
 	addResult(mapper.Deletes)
 	addResult(mapper.Inserts)
 
-	return result
+	return result, nil
 }
 
 func buildSelect(sqlItem *SqlItem, args map[string]interface{}) string {
