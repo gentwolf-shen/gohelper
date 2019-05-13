@@ -2,7 +2,6 @@ package gomybatis
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io/ioutil"
 	"regexp"
 	"strings"
