@@ -33,30 +33,12 @@ const (
 	LEVEL_ERROR
 )
 
-// 从配置文件中初始化
-func InitFromJson(filename string) {
-	if isInited {
-		return
-	}
-
-	b, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic("init logger config file error " + err.Error())
-	}
-
-	initLogger(b)
-}
-
 // 从默认目录加载配置，如果没有配置文件，则使用默认配置
-func InitDefault() {
+func LoadDefault() {
 	if isInited {
 		return
 	}
 
-	initLogger(loadDefaultConfig())
-}
-
-func loadDefaultConfig() []byte {
 	b, err := ioutil.ReadFile(filepath.Dir(os.Args[0]) + "/config/logger.json")
 	if err != nil {
 		str := `{
@@ -69,7 +51,15 @@ func loadDefaultConfig() []byte {
 		b = []byte(str)
 	}
 
-	return b
+	initLogger(b)
+}
+
+func LoadFromJson(str string) {
+	initLogger([]byte(str))
+}
+
+func InitDefault() {
+	LoadDefault()
 }
 
 func initLogger(bytes []byte) {
@@ -78,6 +68,7 @@ func initLogger(bytes []byte) {
 	if err := json.Unmarshal(bytes, config); err != nil {
 		panic("parse logger config error " + err.Error())
 	}
+
 	config.File.LogPath = filterVariable(config.File.LogPath)
 	if _, err := os.Stat(config.File.LogPath); err != nil {
 		if err := os.MkdirAll(config.File.LogPath, os.ModePerm); err != nil {
@@ -98,6 +89,12 @@ func initLogger(bytes []byte) {
 	colors[LEVEL_INFO] = "1;36"
 	colors[LEVEL_WARN] = "1;33"
 	colors[LEVEL_ERROR] = "1;31"
+
+	for k, v := range levels {
+		if v == config.Level {
+			SetLevel(k)
+		}
+	}
 
 	logFiles = make(map[int]*os.File)
 	logWriters = make(map[int]*log.Logger)
@@ -220,7 +217,7 @@ func Logf(level int, format string, msg ...interface{}) {
 }
 
 func logWriter(level int, msg interface{}) {
-	if level > globalLevel {
+	if level >= globalLevel {
 		if _, file, line, ok := runtime.Caller(2); ok {
 			segments := strings.Split(file, "/")
 			filename := segments[len(segments)-1]
