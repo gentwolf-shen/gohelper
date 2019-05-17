@@ -93,6 +93,7 @@ func initLogger(bytes []byte) {
 	for k, v := range levels {
 		if v == config.Level {
 			SetLevel(k)
+			break
 		}
 	}
 
