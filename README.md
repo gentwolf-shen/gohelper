@@ -23,3 +23,4 @@
 15. daemon (以daemon方式运行)
 16. memcache (memcache缓存)
 17. endless (优雅重启http server)
+18. database (数据库操作方法,支持MySQL,SQLite,PostgreSQL,Oracle)
