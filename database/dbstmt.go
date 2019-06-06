@@ -63,7 +63,7 @@ func (this *DbStmt) Insert(args ...interface{}) (int64, error) {
 			err = rows.Scan(&id)
 		}
 	} else {
-		if result, err1 := this.stmt.Exec(args...); err != nil {
+		if result, err1 := this.stmt.Exec(args...); err1 != nil {
 			return 0, err1
 		} else {
 			id, err = result.LastInsertId()
