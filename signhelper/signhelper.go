@@ -18,6 +18,22 @@ func GetSignSimple(params map[string]string, secret string, signType int) string
 }
 
 func GetSign(params map[string]string, secret string, signType int, joiner, separator string) string {
+	str := BuildQuery(params, joiner, separator) + secret
+	signStr := ""
+
+	switch signType {
+	case MD5:
+		signStr = hashhelper.Md5(str)
+	case SHA1:
+		signStr = hashhelper.Sha1(str)
+	case SHA256:
+		signStr = hashhelper.Sha256(str)
+	}
+
+	return signStr
+}
+
+func BuildQuery(params map[string]string, joiner, separator string) string {
 	paramsLength := len(params)
 	keys := make([]string, paramsLength)
 	i := 0
@@ -32,17 +48,5 @@ func GetSign(params map[string]string, secret string, signType int, joiner, sepa
 		tmp[i] = k + joiner + params[k]
 	}
 
-	str := strings.Join(tmp, separator) + secret
-	signStr := ""
-
-	switch signType {
-	case MD5:
-		signStr = hashhelper.Md5(str)
-	case SHA1:
-		signStr = hashhelper.Sha1(str)
-	case SHA256:
-		signStr = hashhelper.Sha256(str)
-	}
-
-	return signStr
+	return strings.Join(tmp, separator)
 }
