@@ -24,3 +24,4 @@
 16. memcache (memcache缓存)
 17. endless (优雅重启http server)
 18. database (数据库操作方法,支持MySQL,SQLite,PostgreSQL,Oracle)
+19. signhelper (参数签名方法,支持md5, sha1, sha256)
