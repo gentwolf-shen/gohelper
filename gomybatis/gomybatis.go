@@ -78,7 +78,12 @@ func Query(selector string, args map[string]interface{}) ([]map[string]string, e
 	tsql, values := parseSql(rawSql, args)
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	rows, err := getStmt(filename, tsql).Query(values...)
+	stmt, err := getStmt(filename, tsql)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := stmt.Query(values...)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +238,11 @@ func UpdateTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = getStmt(filename, tsql).Exec(values...)
+		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
+			err = err1
+		} else {
+			result, err = stmt.Exec(values...)
+		}
 	}
 
 	if err != nil {
@@ -261,7 +270,11 @@ func DeleteTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = getStmt(filename, tsql).Exec(values...)
+		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
+			err = err1
+		} else {
+			result, err = stmt.Exec(values...)
+		}
 	}
 
 	if err != nil {
@@ -289,7 +302,11 @@ func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = getStmt(filename, tsql).Exec(values...)
+		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
+			err = err1
+		} else {
+			result, err = stmt.Exec(values...)
+		}
 	}
 
 	if err != nil {
@@ -299,15 +316,17 @@ func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	return result.LastInsertId()
 }
 
-func getStmt(filename, tsql string) *sql.Stmt {
+func getStmt(filename, tsql string) (*sql.Stmt, error) {
+	var err error
+
 	key := hashhelper.Md5(filename + ":" + tsql)
 	stmt, ok := stmts[key]
 	if !ok {
-		stmt, _ = dbConns[filename].Prepare(tsql)
+		stmt, err = dbConns[filename].Prepare(tsql)
 		stmts[key] = stmt
 	}
 
-	return stmt
+	return stmt, err
 }
 
 func Close() {
