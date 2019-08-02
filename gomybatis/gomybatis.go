@@ -78,12 +78,7 @@ func Query(selector string, args map[string]interface{}) ([]map[string]string, e
 	tsql, values := parseSql(rawSql, args)
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	stmt, err := getStmt(filename, tsql)
-	if err != nil {
-		return nil, err
-	}
-
-	rows, err := stmt.Query(values...)
+	rows, err := dbConns[filename].Query(tsql, values...)
 	if err != nil {
 		return nil, err
 	}
@@ -238,11 +233,7 @@ func UpdateTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
-			err = err1
-		} else {
-			result, err = stmt.Exec(values...)
-		}
+		result, err = dbConns[filename].Exec(tsql, values...)
 	}
 
 	if err != nil {
@@ -270,11 +261,7 @@ func DeleteTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
-			err = err1
-		} else {
-			result, err = stmt.Exec(values...)
-		}
+		result, err = dbConns[filename].Exec(tsql, values...)
 	}
 
 	if err != nil {
@@ -302,11 +289,7 @@ func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		if stmt, err1 := getStmt(filename, tsql); err1 != nil {
-			err = err1
-		} else {
-			result, err = stmt.Exec(values...)
-		}
+		result, err = dbConns[filename].Exec(tsql, values...)
 	}
 
 	if err != nil {
