@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gentwolf-shen/gohelper/hashhelper"
 	"github.com/gentwolf-shen/gohelper/logger"
 )
 
@@ -17,6 +18,7 @@ var (
 	ptnParamVar  = regexp.MustCompile(`\$\{(.*?)\}`)
 	ptnCamelCase = regexp.MustCompile(`_([a-z])`)
 	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
+	stmts        map[string]*sql.Stmt
 )
 
 func initMapper() {
@@ -28,6 +30,10 @@ func initMapper() {
 
 	if dbConns == nil {
 		dbConns = make(map[string]*sql.DB)
+	}
+
+	if stmts == nil {
+		stmts = make(map[string]*sql.Stmt)
 	}
 }
 
@@ -72,7 +78,7 @@ func Query(selector string, args map[string]interface{}) ([]map[string]string, e
 	tsql, values := parseSql(rawSql, args)
 	logger.Debugf(formatSql, selector, rawSql, tsql, values)
 
-	rows, err := dbConns[filename].Query(tsql, values...)
+	rows, err := getStmt(filename, tsql).Query(values...)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +233,7 @@ func UpdateTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = dbConns[filename].Exec(tsql, values...)
+		result, err = getStmt(filename, tsql).Exec(values...)
 	}
 
 	if err != nil {
@@ -255,7 +261,7 @@ func DeleteTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = dbConns[filename].Exec(tsql, values...)
+		result, err = getStmt(filename, tsql).Exec(values...)
 	}
 
 	if err != nil {
@@ -283,7 +289,7 @@ func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	if tx != nil {
 		result, err = tx.Exec(tsql, values...)
 	} else {
-		result, err = dbConns[filename].Exec(tsql, values...)
+		result, err = getStmt(filename, tsql).Exec(values...)
 	}
 
 	if err != nil {
@@ -291,4 +297,22 @@ func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int6
 	}
 
 	return result.LastInsertId()
+}
+
+func getStmt(filename, tsql string) *sql.Stmt {
+	key := hashhelper.Md5(filename + ":" + tsql)
+	stmt, ok := stmts[key]
+	if !ok {
+		stmt, _ = dbConns[filename].Prepare(tsql)
+		stmts[key] = stmt
+	}
+
+	return stmt
+}
+
+func Close() {
+	for name, stmt := range stmts {
+		_ = stmt.Close()
+		delete(stmts, name)
+	}
 }

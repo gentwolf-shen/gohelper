@@ -42,4 +42,8 @@
     <insert id="insert">
         INSERT INTO app_user(username,email) VALUES(#{username},#{email})
     </insert>
+
+    <insert id="testInsert">
+        INSERT INTO app(name, app_key) VALUES(#{name}, #{appKey})
+    </insert>
 </mapper>

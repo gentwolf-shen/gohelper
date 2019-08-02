@@ -1,6 +1,6 @@
 ### gomybatis 使用说明
 
-模仿MyBatis开发一个简单的go版本，实现了一些基本功能，当前版仅支持MySQL。
+模仿MyBatis开发一个简单的go版本，实现了一些基本功能。
 
 Query, Update, Delete, Insert的传入参数类型为 map[string]interface{},
 
@@ -24,10 +24,12 @@ xml文件请查看 sample.xml
         logger.InitDefault()
         
         // 初始化MySQL
-        dbConn, err := sql.Open("mysql", "username:password@tcp(host:3306)dbname?charset=utf8")
+        dbConn, err := sql.Open("mysql", "username:password@tcp(host:3306)dbname?charset=utf8")        
+        defer dbConn.Close()
         
         // 传入mapper的XML文件所在目录
         gomybatis.SetMapperPath(dbConn, "/path/to/mapper/xml/")
+        defer gomybatis.Close()
     ```
 
 2. 查询
