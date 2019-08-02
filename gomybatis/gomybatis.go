@@ -109,63 +109,15 @@ func QueryScalar(selector string, args map[string]interface{}) (string, error) {
 }
 
 func Update(selector string, args map[string]interface{}) (int64, error) {
-	filename, id := parseSelector(selector)
-	sqlItem, ok := mappers[filename][id]
-	if !ok {
-		return -1, selectorNotExists(selector)
-	}
-
-	rawSql := buildUpdate(&sqlItem, args)
-	tsql, values := parseSql(rawSql, args)
-
-	logger.Debugf(formatSql, selector, rawSql, tsql, values)
-
-	result, err := dbConns[filename].Exec(tsql, values...)
-	if err != nil {
-		return -1, err
-	}
-
-	return result.RowsAffected()
+	return UpdateTrans(nil, selector, args)
 }
 
 func Delete(selector string, args map[string]interface{}) (int64, error) {
-	filename, id := parseSelector(selector)
-	sqlItem, ok := mappers[filename][id]
-	if !ok {
-		return -1, selectorNotExists(selector)
-	}
-
-	rawSql := buildDelete(&sqlItem, args)
-	tsql, values := parseSql(rawSql, args)
-
-	logger.Debugf(formatSql, selector, rawSql, tsql, values)
-
-	result, err := dbConns[filename].Exec(tsql, values...)
-	if err != nil {
-		return -1, err
-	}
-
-	return result.RowsAffected()
+	return DeleteTrans(nil, selector, args)
 }
 
 func Insert(selector string, args map[string]interface{}) (int64, error) {
-	filename, id := parseSelector(selector)
-	sqlItem, ok := mappers[filename][id]
-	if !ok {
-		return -1, selectorNotExists(selector)
-	}
-
-	rawSql := buildInsert(&sqlItem, args)
-	tsql, values := parseSql(rawSql, args)
-
-	logger.Debugf(formatSql, selector, rawSql, tsql, values)
-
-	result, err := dbConns[filename].Exec(tsql, values...)
-	if err != nil {
-		return -1, err
-	}
-
-	return result.LastInsertId()
+	return InsertTrans(nil, selector, args)
 }
 
 func fetchRows(rows *sql.Rows) []map[string]string {
@@ -241,4 +193,102 @@ func toCamelCase(str string) string {
 
 func selectorNotExists(selector string) error {
 	return errors.New("selector \"" + selector + "\" not exists!")
+}
+
+func Transaction(filenameForDb string, fun func(tx *sql.Tx) error) error {
+	tx, err := dbConns[filenameForDb].Begin()
+
+	if err == nil {
+		if err = fun(tx); err == nil {
+			err = tx.Commit()
+		} else {
+			_ = tx.Rollback()
+		}
+	}
+
+	return err
+}
+
+func UpdateTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int64, error) {
+	filename, id := parseSelector(selector)
+	sqlItem, ok := mappers[filename][id]
+	if !ok {
+		return -1, selectorNotExists(selector)
+	}
+
+	rawSql := buildUpdate(&sqlItem, args)
+	tsql, values := parseSql(rawSql, args)
+
+	logger.Debugf(formatSql, selector, rawSql, tsql, values)
+
+	var result sql.Result
+	var err error
+
+	if tx != nil {
+		result, err = tx.Exec(tsql, values...)
+	} else {
+		result, err = dbConns[filename].Exec(tsql, values...)
+	}
+
+	if err != nil {
+		return -1, err
+	}
+
+	return result.RowsAffected()
+}
+
+func DeleteTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int64, error) {
+	filename, id := parseSelector(selector)
+	sqlItem, ok := mappers[filename][id]
+	if !ok {
+		return -1, selectorNotExists(selector)
+	}
+
+	rawSql := buildDelete(&sqlItem, args)
+	tsql, values := parseSql(rawSql, args)
+
+	logger.Debugf(formatSql, selector, rawSql, tsql, values)
+
+	var result sql.Result
+	var err error
+
+	if tx != nil {
+		result, err = tx.Exec(tsql, values...)
+	} else {
+		result, err = dbConns[filename].Exec(tsql, values...)
+	}
+
+	if err != nil {
+		return -1, err
+	}
+
+	return result.RowsAffected()
+}
+
+func InsertTrans(tx *sql.Tx, selector string, args map[string]interface{}) (int64, error) {
+	filename, id := parseSelector(selector)
+	sqlItem, ok := mappers[filename][id]
+	if !ok {
+		return -1, selectorNotExists(selector)
+	}
+
+	rawSql := buildInsert(&sqlItem, args)
+	tsql, values := parseSql(rawSql, args)
+
+	logger.Debugf(formatSql, selector, rawSql, tsql, values)
+
+	var result sql.Result
+	var err error
+
+	if tx != nil {
+		result, err = tx.Exec(tsql, values...)
+	} else {
+		result, err = dbConns[filename].Exec(tsql, values...)
+	}
+
+	if err != nil {
+		return -1, err
+	}
+
+	return result.LastInsertId()
 }

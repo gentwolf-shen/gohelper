@@ -213,4 +213,9 @@ type (
 		If      string   `xml:",chardata"`
 		Test    string   `xml:"test,attr"`
 	}
+
+	TransactionItem struct {
+		Selector string
+		Param    map[string]interface{}
+	}
 )
