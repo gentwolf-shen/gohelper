@@ -1,4 +1,5 @@
 {
   "version": "1.0",
-  "name": "gohelper/dict"
+  "name": "${ENV.name:Tom}",
+  "age": "${ENV.age:0}"
 }
