@@ -12,7 +12,7 @@
 4. email (邮件发送,可发送普通文本,HTML文本,附件等)
 5. httpclient (GET,PUT,POST,DELETE等HTTP访问)
 6. gomybatis (模仿mybatis,实现一些基本功能)
-7. dict (JSON格式字典加载,支持从环境变中替换value)
+7. dict (JSON格式字典加载,支持从环境变量中替换value)
 8. hashhelper (hash算法: md5, sha1, sha256)
 9. timehelper (日期/时间常用转换)
 10. util (几个常用的方法)

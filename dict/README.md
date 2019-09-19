@@ -1,6 +1,6 @@
 ### dict 使用说明
 
-将json文件解析为map[string]string类型的值， 支持从环境变中替换value。
+将json文件解析为map[string]string类型的值， 支持从环境变量中替换value。
 
 dict.json示例：
 ```
