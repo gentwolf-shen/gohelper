@@ -100,7 +100,13 @@ func buildSqlWhere(ifs []ItemIf, args map[string]interface{}) string {
 
 	if index > 0 {
 		tmp := strings.Join(arr[:index], " ")
-		return " WHERE " + strings.Trim(strings.Trim(tmp, "OR "), "AND ")
+		if strings.HasPrefix(tmp, "AND ") {
+			tmp = tmp[4:]
+		} else if strings.HasPrefix(tmp, "OR ") {
+			tmp = tmp[3:]
+		}
+		logger.Debug(tmp)
+		return " WHERE " + tmp
 	}
 
 	return ""
