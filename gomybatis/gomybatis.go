@@ -16,7 +16,7 @@ var (
 	mappers      map[string]map[string]SqlItem
 	ptnParam     = regexp.MustCompile(`#\{(.*?)\}`)
 	ptnParamVar  = regexp.MustCompile(`\$\{(.*?)\}`)
-	ptnCamelCase = regexp.MustCompile(`_([a-z])`)
+	ptnCamelCase = regexp.MustCompile(`_([a-z0-9])`)
 	formatSql    = "\n%s\n    %s\n -> %s\n => %v"
 	stmts        map[string]*sql.Stmt
 )
