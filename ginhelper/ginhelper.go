@@ -1,10 +1,38 @@
 package ginhelper
 
 import (
+	"os"
+	"syscall"
+
 	"github.com/gentwolf-shen/gohelper/convert"
 	"github.com/gentwolf-shen/gohelper/dict"
 	"github.com/gin-gonic/gin"
 )
+
+func AppControlRestart(path string, code string, engine *gin.Engine) {
+	appControl("restart", path, code, engine)
+}
+func AppControlShutdown(path string, code string, engine *gin.Engine) {
+	appControl("shutdown", path, code, engine)
+}
+
+func appControl(action, path, code string, engine *gin.Engine) {
+	engine.GET(path, func(c *gin.Context) {
+		if code == c.Query("code") {
+			sign := syscall.SIGHUP
+			if action == "shutdown" {
+				sign = syscall.SIGINT
+			}
+			if err := syscall.Kill(os.Getpid(), sign); err == nil {
+				c.JSON(200, "OK")
+			} else {
+				c.JSON(500, err.Error())
+			}
+		} else {
+			c.JSON(401, "Access Denied")
+		}
+	})
+}
 
 func AllowCrossDomainAll() gin.HandlerFunc {
 	return func(c *gin.Context) {
