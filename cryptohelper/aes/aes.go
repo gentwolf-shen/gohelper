@@ -15,7 +15,7 @@ const (
 
 type Aes struct {
 	mode int8
-	key []byte
+	key  []byte
 	iv   []byte
 }
 
@@ -75,7 +75,7 @@ func (this *Aes) EncryptToString(src []byte) (string, error) {
 }
 
 // 解码base64字符串
-func (this *Aes) DecryptToString(base64EncodeStr string) ([]byte, error) {
+func (this *Aes) DecryptFromString(base64EncodeStr string) ([]byte, error) {
 	b1, err := base64.StdEncoding.DecodeString(base64EncodeStr)
 	if err != nil {
 		return nil, err
