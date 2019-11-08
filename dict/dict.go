@@ -25,7 +25,15 @@ func Load(filename string) error {
 		return err
 	}
 
-	return parse(b)
+	err = parse(b)
+	if err == nil {
+		if _, ok := items["configDir"]; !ok {
+			println(filename)
+			items["configDir"] = filepath.Dir(filename) + "/"
+		}
+	}
+
+	return err
 }
 
 func LoadFromStr(str string) error {
