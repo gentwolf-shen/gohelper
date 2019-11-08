@@ -28,7 +28,6 @@ func Load(filename string) error {
 	err = parse(b)
 	if err == nil {
 		if _, ok := items["configDir"]; !ok {
-			println(filename)
 			items["configDir"] = filepath.Dir(filename) + "/"
 		}
 	}
