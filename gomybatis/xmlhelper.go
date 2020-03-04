@@ -12,7 +12,7 @@ import (
 var (
 	ptnOp    = regexp.MustCompile(`[\s]*(.*?)[\s]*(!=|==|>=|<=|>|<|=)[\s]*(.*)[\s]*`)
 	ptnAndOr = regexp.MustCompile(`^(AND|and|OR|or) `)
-	ptnTest  = regexp.MustCompile(`[\s]*(AND|and|OR|or)[\s]+`)
+	ptnTest  = regexp.MustCompile(`[\s]+(AND|and|OR|or)[\s]+`)
 )
 
 func parseXmlFromStr(str string) map[string]SqlItem {

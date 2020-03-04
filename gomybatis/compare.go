@@ -2,6 +2,7 @@ package gomybatis
 
 import (
 	"reflect"
+	"strings"
 
 	"github.com/gentwolf-shen/gohelper/convert"
 )
@@ -35,7 +36,7 @@ func compare(value interface{}, op, testValue string) bool {
 	case "float64":
 		bl = compareFloat64(value.(float64), convert.ToFloat64(testValue), op)
 	case "string":
-		bl = compareString(value.(string), testValue, op)
+		bl = compareString(value.(string), strings.Trim(strings.Trim(testValue, "'"), "\""), op)
 	}
 
 	return bl
