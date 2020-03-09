@@ -177,16 +177,16 @@ func parseSelector(selector string) (string, string) {
 }
 
 func parseSql(tsql string, args map[string]interface{}) (string, []interface{}) {
+	tsql = ptnParamVar.ReplaceAllStringFunc(tsql, func(a string) string {
+		return args[a[2:len(a)-1]].(string)
+	})
+
 	rs := ptnParam.FindAllStringSubmatch(tsql, -1)
 	values := make([]interface{}, len(rs))
 	for i := range rs {
 		tsql = strings.Replace(tsql, rs[i][0], "?", -1)
 		values[i] = args[rs[i][1]]
 	}
-
-	tsql = ptnParamVar.ReplaceAllStringFunc(tsql, func(a string) string {
-		return args[a[2:len(a)-1]].(string)
-	})
 
 	return tsql, values
 }
