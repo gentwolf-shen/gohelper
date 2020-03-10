@@ -105,7 +105,7 @@ func buildSqlWhere(ifs []ItemIf, args map[string]interface{}) string {
 		} else if strings.HasPrefix(tmp, "OR ") {
 			tmp = tmp[3:]
 		}
-		logger.Debug(tmp)
+
 		return " WHERE " + tmp
 	}
 
