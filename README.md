@@ -3,7 +3,7 @@
 封装一些常用的go方法
 
 ```
-    go get -u github.com/gentwolf-shen/gohelper
+    go get github.com/gentwolf-shen/gohelper
 ```
 
 1. benchmark (基准测试)
@@ -26,3 +26,4 @@
 18. database (数据库操作方法,支持MySQL,SQLite,PostgreSQL,Oracle)
 19. signhelper (参数签名方法,支持md5, sha1, sha256)
 20. validator (常用的几个检测)
+21. gohttp (HTTP访问)
