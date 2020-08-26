@@ -13,7 +13,7 @@ xml文件请查看 sample.xml
     ```
         import (
             "database/sql"
-            _ "github.com/Go-SQL-Driver/MySQL"
+            _ "github.com/go-sql-driver/mysql"
             "gohelper/gomybatis"
             "gohelper/logger"
         )
