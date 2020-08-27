@@ -102,7 +102,7 @@
     fmt.Println(LastInsertId)
     ```
 
-4. 更新数据
+5. 更新数据
     ```
     // 返回更新影响的记录数
     n, err := db.Update("UPDATE user SET status=? WHERE id=?", 1, 2)
@@ -110,7 +110,7 @@
     fmt.Println(n)
     ```
     
-5. 删除数据
+6. 删除数据
     ```
     // 返回被删除的记录籹
     n, err := db.Delete("DELETE FROM user WHERE id>=?", 2)
@@ -118,7 +118,7 @@
     fmt.Println(n)
     ```
     
-6. 使用预处理stmt操作数据库
+7. 使用预处理stmt操作数据库
     ```
     // db.CreateStmt("SQL语句", "stmt的名称，如果不传入，则使用md5(SQL语句)作为键名，缓存在内存中")
     stmt, err := db.CreateStmt("SELECT id,username FROM user WHERE id<=?", "queryStmt")
@@ -140,3 +140,23 @@
     // 关闭stmt， 也可以不显示关闭，在db.Close()或database.CloseAll()中会自动关闭
     db.CloseStmt("stmt的名称)
     ```    
+   
+7. 返回struct数据
+
+    ```
+    type User struct {
+        Id       int64  `db:"id"`
+        Username string `db:"username"`
+        Email    string `db:"email"`
+    }
+   
+    user := User{}
+   
+    err = db.QueryObject(&user, "SELECT id,username,email FROM user where id = ?", 1)
+    fmt.Println(err)
+    fmt.Println(user)
+    
+    all, err := db.QueryObjects(&user, "SELECT id,username,email  FROM id < ?", 10)
+    fmt.Println(err)
+    fmt.Println(all)
+    ```

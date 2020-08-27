@@ -145,3 +145,21 @@ func (this *Database) CloseAllStmt() {
 		delete(this.stmts, name)
 	}
 }
+
+func (this *Database) QueryObjects(value interface{}, query string, args ...interface{}) ([]interface{}, error) {
+	rows, err := this.dbConn.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return fetchObjectRows(value, rows)
+}
+
+func (this *Database) QueryObject(value interface{}, query string, args ...interface{}) error {
+	rows, err := this.dbConn.Query(query, args...)
+	if err != nil {
+		return err
+	}
+
+	return fetchObjectRow(value, rows)
+}
