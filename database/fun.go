@@ -58,6 +58,10 @@ func toCamelCase(str string) string {
 	})
 }
 
+func toLowFirst(str string) string {
+	return strings.ToLower(str[0:1]) + str[1:]
+}
+
 func fetchObjectRow(value interface{}, rows *sql.Rows) error {
 	_, err := fetchObjectRowsForMore(value, rows, true)
 	return err
@@ -91,7 +95,7 @@ func fetchObjectRowsForMore(value interface{}, rows *sql.Rows, isSingleRow bool)
 		bl := false
 		for j := 0; j < fieldSize; j++ {
 			field := types.Field(j)
-			if field.Tag.Get("db") == columns[i] {
+			if field.Tag.Get("db") == columns[i] || toLowFirst(field.Name) == columns[i] {
 				dest[i] = reflect.Indirect(values.Field(j))
 				elem[i] = reflect.New(dest[i].Type()).Interface()
 				bl = true
