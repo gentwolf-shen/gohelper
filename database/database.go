@@ -146,13 +146,13 @@ func (this *Database) CloseAllStmt() {
 	}
 }
 
-func (this *Database) QueryObjects(value interface{}, query string, args ...interface{}) ([]interface{}, error) {
+func (this *Database) QueryObjects(value interface{}, query string, args ...interface{}) error {
 	rows, err := this.dbConn.Query(query, args...)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return fetchObjectRows(value, rows)
+	return fetchObjectRowsForMore(value, rows, false)
 }
 
 func (this *Database) QueryObject(value interface{}, query string, args ...interface{}) error {
@@ -161,5 +161,5 @@ func (this *Database) QueryObject(value interface{}, query string, args ...inter
 		return err
 	}
 
-	return fetchObjectRow(value, rows)
+	return fetchObjectRowsForMore(value, rows, true)
 }

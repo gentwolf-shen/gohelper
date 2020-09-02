@@ -62,41 +62,41 @@ func toLowFirst(str string) string {
 	return strings.ToLower(str[0:1]) + str[1:]
 }
 
-func fetchObjectRow(value interface{}, rows *sql.Rows) error {
-	_, err := fetchObjectRowsForMore(value, rows, true)
-	return err
-}
+func getValueInfo(valuePtr interface{}) (reflect.Value, reflect.Type) {
+	var value reflect.Value
 
-func fetchObjectRows(value interface{}, rows *sql.Rows) ([]interface{}, error) {
-	return fetchObjectRowsForMore(value, rows, false)
-}
+	valueType := reflect.TypeOf(valuePtr).Elem()
+	kind := valueType.Kind()
 
-func fetchObjectRowsForMore(value interface{}, rows *sql.Rows, isSingleRow bool) ([]interface{}, error) {
-	if rows == nil {
-		return nil, nil
+	if kind == reflect.Struct {
+		value = reflect.ValueOf(valuePtr).Elem()
+	} else if kind == reflect.Slice {
+		valueType = valueType.Elem()
+		value = reflect.New(valueType).Elem()
 	}
 
-	columns, _ := rows.Columns()
+	return value, valueType
+}
+
+func getValues(value reflect.Value, valueType reflect.Type, columns []string) ([]reflect.Value, []interface{}) {
+	columnSize := len(columns)
 	for i, v := range columns {
 		columns[i] = toCamelCase(v)
 	}
-	columnSize := len(columns)
-	types := reflect.TypeOf(value).Elem()
-	fieldSize := types.NumField()
 
-	values := reflect.ValueOf(value).Elem()
 	dest := make([]reflect.Value, columnSize)
 	elem := make([]interface{}, columnSize)
 
 	empty := ""
 	nilValue := reflect.Indirect(reflect.ValueOf(empty))
+	fieldSize := valueType.NumField()
 
 	for i := 0; i < columnSize; i++ {
 		bl := false
 		for j := 0; j < fieldSize; j++ {
-			field := types.Field(j)
+			field := valueType.Field(j)
 			if field.Tag.Get("db") == columns[i] || toLowFirst(field.Name) == columns[i] {
-				dest[i] = reflect.Indirect(values.Field(j))
+				dest[i] = reflect.Indirect(value.Field(j))
 				elem[i] = reflect.New(dest[i].Type()).Interface()
 				bl = true
 				break
@@ -109,13 +109,24 @@ func fetchObjectRowsForMore(value interface{}, rows *sql.Rows, isSingleRow bool)
 		}
 	}
 
-	maxLength := 1
-	if !isSingleRow {
-		maxLength = 100
-	}
-	items := make([]interface{}, maxLength)
+	return dest, elem
+}
 
-	index := 0
+func fetchObjectRowsForMore(valuePtr interface{}, rows *sql.Rows, isSingleRow bool) error {
+	if rows == nil {
+		return nil
+	}
+
+	columns, _ := rows.Columns()
+	for i, v := range columns {
+		columns[i] = toCamelCase(v)
+	}
+
+	value, valueType := getValueInfo(valuePtr)
+	dest, elem := getValues(value, valueType, columns)
+
+	items := reflect.Indirect(reflect.ValueOf(valuePtr))
+
 	for rows.Next() {
 		if e := rows.Scan(elem...); e == nil {
 			for k, v := range elem {
@@ -124,20 +135,15 @@ func fetchObjectRowsForMore(value interface{}, rows *sql.Rows, isSingleRow bool)
 				}
 			}
 
-			if index < maxLength {
-				items[index] = reflect.ValueOf(value).Elem().Interface()
-			} else {
-				items = append(items, reflect.ValueOf(value).Elem().Interface())
-			}
-			index++
-
 			if isSingleRow {
 				break
+			} else {
+				items.Set(reflect.Append(items, value))
 			}
 		}
 	}
 
 	_ = rows.Close()
 
-	return items[0:index], nil
+	return nil
 }

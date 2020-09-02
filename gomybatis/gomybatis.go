@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"io/ioutil"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -68,17 +69,7 @@ func SetMapperPath(dbConn *sql.DB, mapperPath string) {
 }
 
 func Query(selector string, args map[string]interface{}) ([]map[string]string, error) {
-	filename, id := parseSelector(selector)
-	sqlItem, ok := mappers[filename][id]
-	if !ok {
-		return nil, selectorNotExists(selector)
-	}
-
-	rawSql := buildSelect(&sqlItem, args)
-	tsql, values := parseSql(rawSql, args)
-	logger.Debugf(formatSql, selector, rawSql, tsql, values)
-
-	rows, err := dbConns[filename].Query(tsql, values...)
+	rows, err := query(selector, args)
 	if err != nil {
 		return nil, err
 	}
@@ -195,6 +186,10 @@ func toCamelCase(str string) string {
 	return ptnCamelCase.ReplaceAllStringFunc(str, func(a string) string {
 		return strings.Title(a[1:2])
 	})
+}
+
+func toLowFirst(str string) string {
+	return strings.ToLower(str[0:1]) + str[1:]
 }
 
 func selectorNotExists(selector string) error {
@@ -317,4 +312,130 @@ func Close() {
 		_ = stmt.Close()
 		delete(stmts, name)
 	}
+}
+
+func query(selector string, args map[string]interface{}) (*sql.Rows, error) {
+	filename, id := parseSelector(selector)
+	sqlItem, ok := mappers[filename][id]
+	if !ok {
+		return nil, selectorNotExists(selector)
+	}
+
+	rawSql := buildSelect(&sqlItem, args)
+	tsql, values := parseSql(rawSql, args)
+	logger.Debugf(formatSql, selector, rawSql, tsql, values)
+
+	return dbConns[filename].Query(tsql, values...)
+}
+
+func QueryObject(value interface{}, selector string, args map[string]interface{}) error {
+	rows, err := query(selector, args)
+	if err != nil {
+		return nil
+	}
+
+	return fetchObjectRow(value, rows)
+}
+
+func QueryObjects(value interface{}, selector string, args map[string]interface{}) error {
+	rows, err := query(selector, args)
+	if err != nil {
+		return nil
+	}
+
+	return fetchObjectRows(value, rows)
+}
+
+func fetchObjectRow(value interface{}, rows *sql.Rows) error {
+	return fetchObjectRowsForMore(value, rows, true)
+}
+
+func fetchObjectRows(value interface{}, rows *sql.Rows) error {
+	return fetchObjectRowsForMore(value, rows, false)
+}
+
+func getValueInfo(valuePtr interface{}) (reflect.Value, reflect.Type) {
+	var value reflect.Value
+
+	valueType := reflect.TypeOf(valuePtr).Elem()
+	kind := valueType.Kind()
+
+	if kind == reflect.Struct {
+		value = reflect.ValueOf(valuePtr).Elem()
+	} else if kind == reflect.Slice {
+		valueType = valueType.Elem()
+		value = reflect.New(valueType).Elem()
+	}
+
+	return value, valueType
+}
+
+func getValues(value reflect.Value, valueType reflect.Type, columns []string) ([]reflect.Value, []interface{}) {
+	columnSize := len(columns)
+	for i, v := range columns {
+		columns[i] = toCamelCase(v)
+	}
+
+	dest := make([]reflect.Value, columnSize)
+	elem := make([]interface{}, columnSize)
+
+	empty := ""
+	nilValue := reflect.Indirect(reflect.ValueOf(empty))
+	fieldSize := valueType.NumField()
+
+	for i := 0; i < columnSize; i++ {
+		bl := false
+		for j := 0; j < fieldSize; j++ {
+			field := valueType.Field(j)
+			if field.Tag.Get("db") == columns[i] || toLowFirst(field.Name) == columns[i] {
+				dest[i] = reflect.Indirect(value.Field(j))
+				elem[i] = reflect.New(dest[i].Type()).Interface()
+				bl = true
+				break
+			}
+		}
+
+		if !bl {
+			dest[i] = nilValue
+			elem[i] = reflect.New(dest[i].Type()).Interface()
+		}
+	}
+
+	return dest, elem
+}
+
+func fetchObjectRowsForMore(valuePtr interface{}, rows *sql.Rows, isSingleRow bool) error {
+	if rows == nil {
+		return nil
+	}
+
+	columns, _ := rows.Columns()
+	for i, v := range columns {
+		columns[i] = toCamelCase(v)
+	}
+
+	value, valueType := getValueInfo(valuePtr)
+	dest, elem := getValues(value, valueType, columns)
+
+	items := reflect.Indirect(reflect.ValueOf(valuePtr))
+
+	for rows.Next() {
+		if e := rows.Scan(elem...); e == nil {
+			for k, v := range elem {
+				if dest[k].CanSet() {
+					dest[k].Set(reflect.ValueOf(v).Elem())
+				}
+			}
+
+			if isSingleRow {
+				break
+			} else {
+				items.Set(reflect.Append(items, value))
+			}
+		}
+	}
+
+	_ = rows.Close()
+
+	return nil
 }
