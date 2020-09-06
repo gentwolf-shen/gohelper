@@ -331,7 +331,7 @@ func query(selector string, args map[string]interface{}) (*sql.Rows, error) {
 func QueryObject(value interface{}, selector string, args map[string]interface{}) error {
 	rows, err := query(selector, args)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return fetchObjectRow(value, rows)
@@ -340,7 +340,7 @@ func QueryObject(value interface{}, selector string, args map[string]interface{}
 func QueryObjects(value interface{}, selector string, args map[string]interface{}) error {
 	rows, err := query(selector, args)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	return fetchObjectRows(value, rows)
