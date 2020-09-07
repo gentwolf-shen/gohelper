@@ -3,15 +3,19 @@ package util
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
 	"math"
 	rnd "math/rand"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 )
 
 var (
-	chars map[string]string
+	chars         map[string]string
+	ptnCamelCase  = regexp.MustCompile(`_([a-z0-9])`)
+	ptnUnderScore = regexp.MustCompile(`([A-Z])`)
 )
 
 func init() {
@@ -105,4 +109,22 @@ func Struct2Map(obj interface{}) map[string]interface{} {
 		data[name] = values.Field(i).Interface()
 	}
 	return data
+}
+
+func ToCamelCase(str string) string {
+	return ptnCamelCase.ReplaceAllStringFunc(str, func(a string) string {
+		return strings.Title(a[1:2])
+	})
+}
+
+func ToUnderScore(str string) string {
+	str = ptnUnderScore.ReplaceAllStringFunc(str, func(a string) string {
+		fmt.Println(a)
+		return "_" + strings.ToLower(a)
+	})
+	return strings.Trim(str, "_")
+}
+
+func ToLowFirst(str string) string {
+	return strings.ToLower(str[0:1]) + str[1:]
 }
