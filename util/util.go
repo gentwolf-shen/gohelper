@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"math"
 	rnd "math/rand"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -85,4 +86,23 @@ func FilterHtmlChars(str string) string {
 		str = strings.Replace(str, k, v, -1)
 	}
 	return str
+}
+
+func Struct2Map(obj interface{}) map[string]interface{} {
+	types := reflect.TypeOf(obj)
+	values := reflect.ValueOf(obj)
+
+	if types.Kind() == reflect.Ptr {
+		types = types.Elem()
+		values = values.Elem()
+	}
+
+	size := types.NumField()
+	var data = make(map[string]interface{})
+	for i := 0; i < size; i++ {
+		name := types.Field(i).Name
+		name = strings.ToLower(name[0:1]) + name[1:]
+		data[name] = values.Field(i).Interface()
+	}
+	return data
 }
