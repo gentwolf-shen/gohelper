@@ -38,8 +38,8 @@ func StopSeconds(name string) float64 {
 /**
 结束时间, 并返回时间差(毫秒)
 */
-func StopMilliseconds(name string) float64 {
-	return StopSeconds(name) * 1000
+func StopMilliseconds(name string) int64 {
+	return stopTime(name).Milliseconds()
 }
 
 /**
