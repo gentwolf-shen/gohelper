@@ -77,7 +77,8 @@ func buildDelete(sqlItem *SqlItem, args map[string]interface{}) string {
 }
 
 func buildInsert(sqlItem *SqlItem, args map[string]interface{}) string {
-	return sqlItem.Sql
+	//return sqlItem.Sql
+	return parseFilter(sqlItem.Sql + buildSqlSet(sqlItem.Set.Ifs, args) + " " + strings.TrimSpace(sqlItem.Suffix))
 }
 
 func buildSqlWhere(ifs []ItemIf, args map[string]interface{}) string {
